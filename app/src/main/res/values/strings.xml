@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Popular Videos App Stage 1</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_detail">Detail Activity</string>
+    <string name="btn_favorite">Mark as Favorite</string>
+    <integer name="num_columns">2</integer>
+
+    <string name="review_author_placeholder">Author: </string>
+</resources>
