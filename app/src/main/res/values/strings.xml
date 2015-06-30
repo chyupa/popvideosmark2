@@ -6,4 +6,7 @@
     <integer name="num_columns">2</integer>
 
     <string name="review_author_placeholder">Author: </string>
+
+    <integer name="mark_as_favorite_default">0</integer>
+    <integer name="mark_as_favorite">1</integer>
 </resources>

@@ -1,7 +1,9 @@
 package ro.gdm.razvan.popularvideosappstage1;
 
 import android.app.Fragment;
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -11,12 +13,14 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
@@ -67,6 +71,39 @@ public class DetailActivityFragment extends Fragment {
         new GetMovieReviewsTask().execute(movie_id);
 
         new GetMovieTrailersTask().execute(movie_id);
+
+        final Button mark_as_favorite = (Button)rootView.findViewById(R.id.mark_as_favorite);
+        final String finalMovie_id = movie_id;
+        mark_as_favorite.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MyPopularMovies myPopularMovies = new MyPopularMovies(getActivity());
+                SQLiteDatabase db = myPopularMovies.getWritableDatabase();
+
+
+
+                ContentValues values_insert = new ContentValues();
+                values_insert.put(MyPopularMovies.MyPopluarMoviesTables.KEY_MOVIE_MOVIE_ID, finalMovie_id);
+                long new_row_id;
+                new_row_id = db.insert(
+                        MyPopularMovies.MyPopluarMoviesTables.TABLE_MOVIES_NAME,
+                        null,
+                        values_insert
+                );
+
+                if(new_row_id > 0){
+                    Toast.makeText(getActivity(), "Movie added to favorites", Toast.LENGTH_SHORT).show();
+                }
+                String tag = mark_as_favorite.getTag().toString();
+                if(tag.equals("1")){
+                    mark_as_favorite.setTag(0);
+                    mark_as_favorite.setText("Mark as favorite");
+                }else if(tag.equals("0")){
+                    mark_as_favorite.setTag(1);
+                    mark_as_favorite.setText("Remove from favorites");
+                }
+            }
+        });
 
         return rootView;
     }
