@@ -21,28 +21,24 @@ import java.util.List;
  */
 final class PicassoImageAdapter extends BaseAdapter {
     private final Context context;
-    private final List<String> urls = new ArrayList<String>();
+    private final String[][] results;
     private final LayoutInflater mInflater;
 
-    public PicassoImageAdapter(Context context, String[] poster_paths){
+    public PicassoImageAdapter(Context context, String[][] results){
         this.context = context;
-
         this.mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        this.results = results;
 
-        for(String s : poster_paths){
-            String uri = "http://image.tmdb.org/t/p/w500" + s;
-            urls.add(uri);
-        }
     }
 
     @Override
     public int getCount() {
-        return urls.size();
+        return results.length;
     }
 
     @Override
-    public String getItem(int position) {
-        return urls.get(position);
+    public String[] getItem(int position) {
+        return results[position];
     }
 
     @Override
@@ -53,9 +49,8 @@ final class PicassoImageAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
 
-        String url = getItem(position);
+        String[] movie = getItem(position);
         Picasso picasso = Picasso.with(context);
-        picasso.setDebugging(true);
         View view;
 
         if( convertView == null ){
@@ -65,10 +60,13 @@ final class PicassoImageAdapter extends BaseAdapter {
         }
         final ProgressBar progressBar = (ProgressBar)view.findViewById(R.id.progress_bar);
         progressBar.setVisibility(View.VISIBLE);
+        view.setTag(movie[1]);
         SquaredImageView squaredImageView = (SquaredImageView)view.findViewById(R.id.grid_item);
+
+        String url = "http://image.tmdb.org/t/p/w500" + movie[0];
         picasso.load(url)
-                .tag(context).
-                into(squaredImageView, new Callback() {
+                .tag(context)
+                .into(squaredImageView, new Callback() {
                     @Override
                     public void onSuccess() {
                         progressBar.setVisibility(View.GONE);

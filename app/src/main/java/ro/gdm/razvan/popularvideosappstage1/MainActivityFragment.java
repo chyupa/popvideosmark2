@@ -2,8 +2,11 @@ package ro.gdm.razvan.popularvideosappstage1;
 
 import android.app.ActivityOptions;
 import android.app.Fragment;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -25,6 +28,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -73,12 +79,7 @@ public class MainActivityFragment extends Fragment {
                      * kinda hacky. Don't know if this is the way to do it.
                      * we need movie_id in DetailActivity to get the information we need to populate all the fields
                      */
-                    String movie_id = "";
-                    try {
-                        movie_id = movie_results.getJSONArray("results").getJSONObject(position).getString("id");
-                    } catch (JSONException e) {
-                        Log.e("MAIN_JSON_E", e.getMessage());
-                    }
+                    String movie_id = view.getTag().toString();
                     arguments.putString("movie_id", movie_id);
                     /**
                      * we use fragment here and no Intent because the Detail Activity needs to be in the same layout as the grid view
@@ -96,15 +97,12 @@ public class MainActivityFragment extends Fragment {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     Intent intent = new Intent(getActivity(), DetailActivity.class);
-                    String movie_id = "";
-                    try {
-                        movie_id = movie_results.getJSONArray("results").getJSONObject(position).getString("id");
-                    } catch (JSONException e) {
-                        Log.e("MAIN_JSON_E", e.getMessage());
-                    }
+                    String movie_id = view.getTag().toString();
+
+                    /**
+                     * something odd here. the debugger says that view.getTag() returns a String but I need to use toString to make it work ??
+                     */
                     intent.putExtra("movie_id", movie_id);
-//                    ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(getActivity(), squaredImageView, "test");
-//                    startActivity(intent, options.toBundle());
                     startActivity(intent);
                 }
             });
@@ -117,29 +115,62 @@ public class MainActivityFragment extends Fragment {
      */
     public void updateMovies(){
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String sort_by = sharedPreferences.getString( getString(R.string.pref_sort_by_key), getString(R.string.pref_sort_by_default));
-        new GetMovies().execute(sort_by);
+        String sort_by = sharedPreferences.getString(getString(R.string.pref_sort_by_key), getString(R.string.pref_sort_by_default));
+        if( sort_by.equals("favorites.desc") )
+        {
+            getMoviesFromSharedPrefs();
+        }
+        else
+        {
+            new GetMovies().execute(sort_by);
+        }
+    }
+
+    public void getMoviesFromSharedPrefs(){
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("favorite_movies", Context.MODE_PRIVATE);
+        Map<String, ?> all_prefs = sharedPreferences.getAll();
+        String[][] movies = new String[all_prefs.size()][];
+        int counter = 0;
+        for(Map.Entry<String, ?> entry : all_prefs.entrySet()){
+            String[] fav_movie = new String[2];
+            try {
+                String entry_string = entry.getValue().toString();
+                JSONArray jsonArray = new JSONArray(entry_string);
+                fav_movie[0] = jsonArray.getString(0);
+                fav_movie[1] = jsonArray.getString(1);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            movies[counter++] = fav_movie;
+        }
+
+        gridView.setAdapter(new PicassoImageAdapter(getActivity(), movies));
+        gridView.setOnScrollListener(new PicassoScrollListener(getActivity()));
     }
 
     /**
      * async task to get the most popular or most voted movies
      */
-    public class GetMovies extends AsyncTask<String, Void, String[]>{
+    public class GetMovies extends AsyncTask<String, Void, String[][]>{
 
         private final String LOG_TAG = this.getClass().getSimpleName();
 
-        private String[] getMoviesFromJson( String moviesJson ) throws JSONException{
+        private String[][] getMoviesFromJson( String moviesJson ) throws JSONException{
             final String TMDB_RESULTS = "results";
             final String TMDB_POSTER_PATH = "poster_path";
+            final String TMDB_MOVIE_ID = "id";
 
             movie_results = new JSONObject(moviesJson);
             JSONArray results = movie_results.getJSONArray(TMDB_RESULTS);
 
             int results_length = results.length();
-            String[] posters = new String[results_length];
+            String[][] posters = new String[results_length][];
             for( int i = 0; i < results_length; i++ ){
+                String[] poster_and_id = new String[2];
                 JSONObject movie = results.getJSONObject(i);
-                posters[i] = movie.getString(TMDB_POSTER_PATH);
+                poster_and_id[0] = movie.getString(TMDB_POSTER_PATH);
+                poster_and_id[1] = movie.getString(TMDB_MOVIE_ID);
+                posters[i] = poster_and_id;
             }
 
             return posters;
@@ -150,7 +181,7 @@ public class MainActivityFragment extends Fragment {
          * @param strings
          */
         @Override
-        protected void onPostExecute(String[] strings) {
+        protected void onPostExecute(String[][] strings) {
             super.onPostExecute(strings);
 
             gridView.setAdapter(new PicassoImageAdapter(getActivity(), strings));
@@ -164,7 +195,7 @@ public class MainActivityFragment extends Fragment {
          * @return
          */
         @Override
-        protected String[] doInBackground(String... params) {
+        protected String[][] doInBackground(String... params) {
             final String sort_by = params[0];
             final String TMDB_DISCOVER = "discover";
             final String TMDB_MOVIE = "movie";

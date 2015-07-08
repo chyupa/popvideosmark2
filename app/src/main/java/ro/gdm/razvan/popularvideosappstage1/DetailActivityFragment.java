@@ -1,24 +1,19 @@
 package ro.gdm.razvan.popularvideosappstage1;
 
 import android.app.Fragment;
-import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Typeface;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -48,14 +43,16 @@ import java.util.Map;
  */
 public class DetailActivityFragment extends Fragment {
 
-
     public DetailActivityFragment() {
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
+        final View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
+
+        final SharedPreferences sharedPreferences = getActivity().getSharedPreferences("favorite_movies", Context.MODE_PRIVATE);
+        final SharedPreferences.Editor editor = sharedPreferences.edit();
 
         /**
          * get the movie id from the intent or from the fragment
@@ -72,35 +69,44 @@ public class DetailActivityFragment extends Fragment {
 
         new GetMovieTrailersTask().execute(movie_id);
 
+        final TextView title = (TextView)rootView.findViewById(R.id.original_title_top);
+
         final Button mark_as_favorite = (Button)rootView.findViewById(R.id.mark_as_favorite);
         final String finalMovie_id = movie_id;
+
+
         mark_as_favorite.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                MyPopularMovies myPopularMovies = new MyPopularMovies(getActivity());
-                SQLiteDatabase db = myPopularMovies.getWritableDatabase();
 
+                ImageView poster = (ImageView)rootView.findViewById(R.id.poster);
+                String poster_path = poster.getTag().toString();
 
-
-                ContentValues values_insert = new ContentValues();
-                values_insert.put(MyPopularMovies.MyPopluarMoviesTables.KEY_MOVIE_MOVIE_ID, finalMovie_id);
-                long new_row_id;
-                new_row_id = db.insert(
-                        MyPopularMovies.MyPopluarMoviesTables.TABLE_MOVIES_NAME,
-                        null,
-                        values_insert
-                );
-
-                if(new_row_id > 0){
-                    Toast.makeText(getActivity(), "Movie added to favorites", Toast.LENGTH_SHORT).show();
-                }
                 String tag = mark_as_favorite.getTag().toString();
-                if(tag.equals("1")){
-                    mark_as_favorite.setTag(0);
-                    mark_as_favorite.setText("Mark as favorite");
-                }else if(tag.equals("0")){
+                if(tag.equals("0")){
                     mark_as_favorite.setTag(1);
                     mark_as_favorite.setText("Remove from favorites");
+                    Toast.makeText(getActivity(), "Movie added to favorites", Toast.LENGTH_SHORT).show();
+
+                    String[] movie_fav = new String[2];
+                    movie_fav[0] = poster_path;
+                    movie_fav[1] = finalMovie_id;
+                    JSONArray jsonArray = null;
+                    try {
+                        jsonArray = new JSONArray(movie_fav);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    editor.putString(title.getText().toString(), jsonArray.toString());
+                    editor.commit();
+                }else if(tag.equals("1")){
+                    mark_as_favorite.setTag(0);
+                    mark_as_favorite.setText("Mark as favorite");
+                    Toast.makeText(getActivity(), "Removed movie from favorites", Toast.LENGTH_SHORT).show();
+
+                    if(sharedPreferences.contains(title.getText().toString())){
+                        editor.remove(title.getText().toString()).commit();
+                    }
                 }
             }
         });
@@ -114,8 +120,16 @@ public class DetailActivityFragment extends Fragment {
      * @param movie
      */
     public void setData(Map movie) {
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("favorite_movies", Context.MODE_PRIVATE);
+
         TextView title = (TextView) getActivity().findViewById(R.id.original_title_top);
         title.setText(movie.get("original_title").toString());
+
+        if(sharedPreferences.contains(title.getText().toString())){
+            Button mark_as_favorite = (Button)getActivity().findViewById(R.id.mark_as_favorite);
+            mark_as_favorite.setTag(1);
+            mark_as_favorite.setText("Remove from favorites");
+        }
 
         TextView year = (TextView) getActivity().findViewById(R.id.year);
         year.setText(movie.get("release_date").toString());
@@ -130,6 +144,7 @@ public class DetailActivityFragment extends Fragment {
         overview.setText(movie.get("overview").toString());
 
         ImageView imageView = (ImageView) getActivity().findViewById(R.id.poster);
+        imageView.setTag(movie.get("poster_path").toString());
         String poster_path = "http://image.tmdb.org/t/p/w342" + movie.get("poster_path").toString();
         Picasso.with(getActivity()).load(poster_path).into(imageView);
     }
