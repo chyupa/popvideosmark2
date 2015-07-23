@@ -233,7 +233,8 @@ public class DetailActivityFragment extends Fragment {
             HttpURLConnection urlConnection = null;
             BufferedReader bufferedReader = null;
 
-            final String api_key = "99c5cb232d21a974d814071ef8c9800c";
+            final String api_key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+            //replace with your API key
             String movie_json = null;
             try {
                 Uri.Builder uri = new Uri.Builder();
@@ -326,7 +327,8 @@ public class DetailActivityFragment extends Fragment {
         protected String[][] doInBackground(String... params) {
             HttpURLConnection urlConnection = null;
             BufferedReader bufferedReader = null;
-            final String api_key = "99c5cb232d21a974d814071ef8c9800c";
+            final String api_key = "xxxxxxxxxxxxxxxxxxxxxxxxxx";
+            //replace with your API key
             String movie_reviews_json = null;
             try {
                 Uri.Builder uri = new Uri.Builder();
@@ -395,7 +397,8 @@ public class DetailActivityFragment extends Fragment {
         protected String[][] doInBackground(String... params) {
             HttpURLConnection urlConnection = null;
             BufferedReader bufferedReader = null;
-            final String api_key = "99c5cb232d21a974d814071ef8c9800c";
+            final String api_key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+            //replace with your API key
 
             String movie_trailers_json = null;
             try {
