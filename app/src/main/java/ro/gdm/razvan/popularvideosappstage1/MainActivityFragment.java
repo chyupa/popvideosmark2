@@ -201,7 +201,8 @@ public class MainActivityFragment extends Fragment {
             final String TMDB_MOVIE = "movie";
             final String TMDB_SORT = "sort_by";
             final String TMDB_API = "api_key";
-            final String TMDB_API_KEY = "99c5cb232d21a974d814071ef8c9800c";
+            final String TMDB_API_KEY = "xxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+            //replace with your API key
 
             HttpURLConnection urlConnection = null;
             BufferedReader bufferedReader = null;
